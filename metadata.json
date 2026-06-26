@@ -1,0 +1,6 @@
+{
+  "name": "BharatMind AI",
+  "description": "India's AI Business Operating System. Run your entire business with one AI Copilot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
