@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -31,6 +31,27 @@ interface DashboardPreviewProps {
 }
 
 export default function DashboardPreview({ demoTriggerCount, highlightedChip }: DashboardPreviewProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(true);
+
+  useEffect(() => {
+    const currentElement = containerRef.current;
+    if (!currentElement) return;
+
+    // Fast resolution using IntersectionObserver to pause off-screen operations
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.02, rootMargin: "100px" }
+    );
+
+    observer.observe(currentElement);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   // Navigation State
   const [activeTab, setActiveTab] = useState("Dashboard");
   
@@ -44,6 +65,7 @@ Select any capability on the left or type your query below to analyze your live 
 *Try clicking:*
 • **"Analyze GST Outward Supplies for optimization"**
 • **"Compare retail pricing with local Kirana competitors"**`);
+  const [displayedResponse, setDisplayedResponse] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   // Stats target and current animated states
@@ -64,6 +86,86 @@ Select any capability on the left or type your query below to analyze your live 
   // Load Animation triggering
   const [animateChart, setAnimateChart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+
+  // Live typing effect on response change
+  useEffect(() => {
+    let index = 0;
+    setDisplayedResponse("");
+    const speed = chatResponse.length > 300 ? 5 : 8;
+    const timer = setInterval(() => {
+      setDisplayedResponse(chatResponse.slice(0, index));
+      index++;
+      if (index > chatResponse.length) {
+        clearInterval(timer);
+      }
+    }, speed);
+    return () => clearInterval(timer);
+  }, [chatResponse]);
+
+  // Redraw SVG path when revenueTimeframe changes
+  useEffect(() => {
+    setAnimateChart(false);
+    const timer = setTimeout(() => setAnimateChart(true), 150);
+    return () => clearTimeout(timer);
+  }, [revenueTimeframe]);
+
+  // Multidimensional paths mapping
+  const chartPaths = useMemo(() => ({
+    "Today": {
+      path1: "M0 130 C 80 125, 150 75, 220 85 C 290 95, 360 45, 430 55 L 500 25",
+      path2: "M0 145 C 90 138, 180 118, 270 122 C 360 128, 450 78, 500 68",
+      peak: "₹18K/hr"
+    },
+    "This Week": {
+      path1: "M0 120 C 50 110, 100 90, 150 100 C 200 110, 250 50, 300 45 C 350 40, 400 80, 450 60 L 500 40",
+      path2: "M0 140 C 60 130, 120 120, 180 115 C 240 110, 300 80, 360 85 C 420 90, 480 65, 500 55",
+      peak: "₹1.8L/day"
+    },
+    "This Month": {
+      path1: "M0 105 C 80 115, 160 115, 240 75 C 320 35, 400 55, 450 35 L 500 20",
+      path2: "M0 125 C 70 130, 140 135, 210 120 C 280 105, 350 90, 420 95 L 500 55",
+      peak: "₹14.2L/mo"
+    },
+    "FY 2026-27": {
+      path1: "M0 145 C 100 135, 200 55, 300 65 C 400 75, 450 25, 500 15",
+      path2: "M0 148 C 100 142, 200 112, 300 118 C 400 122, 450 82, 500 42",
+      peak: "₹1.6Cr/Yr"
+    }
+  }), []);
+
+  // Rolling alert logs matrix
+  const [alerts, setAlerts] = useState([
+    { id: 1, text: "Blinkit Competitor pricing shift: Basmati Rice reduced to ₹105/kg (Suggested margin adjustment is active).", type: "market" },
+    { id: 2, text: "Tally Ledger reconciled: Outstanding balance of ₹4,20,000 for Sharma Distributors verified.", type: "tally" }
+  ]);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const alertPool = [
+      { text: "Blinkit Competitor pricing shift: Basmati Rice reduced to ₹105/kg (Suggested margin adjustment is active).", type: "market" },
+      { text: "Tally Ledger reconciled: Outstanding balance of ₹4,20,000 for Sharma Distributors verified.", type: "tally" },
+      { text: "Quick Commerce pricing shift: Refined Oil raised to ₹185/L in local radius.", type: "market" },
+      { text: "Tally Prime: Synced 14 credit ledgers automatically with zero mismatch risk.", type: "tally" },
+      { text: "GSTR-1 mismatch check: 100% matched with zero anomalies found.", type: "gst" },
+      { text: "GST Invoice verified: Input Tax Credit automated reconciliation saved ₹42,000.", type: "gst" },
+      { text: "WhatsApp: Dispatching custom regional payment reminder to Sharma Distributors.", type: "whatsapp" },
+      { text: "Shopify Recovered: Tamil language Voice AI recovered abandoned shopping cart valued at ₹3,499.", type: "shopify" },
+      { text: "Sovereign Core: Private localized LLM security audit check passed with zero packet exports.", type: "system" }
+    ];
+
+    const interval = setInterval(() => {
+      setAlerts(prev => {
+        const lastAlert = prev[prev.length - 1];
+        const currentPoolIndex = alertPool.findIndex(item => item.text === lastAlert?.text);
+        const nextIndex = (currentPoolIndex + 1) % alertPool.length;
+        const nextAlert = alertPool[nextIndex];
+        const nextId = lastAlert ? lastAlert.id + 1 : 1;
+        return [lastAlert, { id: nextId, ...nextAlert }];
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isInView]);
 
   useEffect(() => {
     // Staggered trigger for chart path drawing
@@ -108,8 +210,26 @@ Select any capability on the left or type your query below to analyze your live 
     };
   }, []);
 
+  // Periodic health score micro-fluctuations representing active diagnostic heartbeat
+  useEffect(() => {
+    if (!isInView) return;
+    const timer = setInterval(() => {
+      setStats(prev => {
+        if (prev.healthScore === 0) return prev;
+        const drift = Math.random() > 0.5 ? 1 : -1;
+        const newScore = Math.max(92, Math.min(97, prev.healthScore + drift));
+        return {
+          ...prev,
+          healthScore: newScore
+        };
+      });
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [isInView]);
+
   // Small live activity updates simulated
   useEffect(() => {
+    if (!isInView) return;
     const interval = setInterval(() => {
       setStats(prev => ({
         ...prev,
@@ -119,7 +239,7 @@ Select any capability on the left or type your query below to analyze your live 
       }));
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isInView]);
 
   // Sync state if demo is triggered
   useEffect(() => {
@@ -187,7 +307,7 @@ Select any capability on the left or type your query below to analyze your live 
   };
 
   return (
-    <div className="w-full relative" id="dashboard-container">
+    <div className="w-full relative" id="dashboard-container" ref={containerRef}>
       {/* Interactive Floater Accent */}
       <div className="absolute -top-12 -left-12 w-48 h-48 bg-[#FF9933]/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-[#114C5A]/30 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -442,15 +562,15 @@ Select any capability on the left or type your query below to analyze your live 
 
                       {/* Shaded Area Chart 1 */}
                       <path
-                        d="M0 120 C 50 110, 100 90, 150 100 C 200 110, 250 50, 300 45 C 350 40, 400 80, 450 60 L 500 40 L 500 150 L 0 150 Z"
+                        d={`${chartPaths[revenueTimeframe as keyof typeof chartPaths]?.path1 || chartPaths["This Month"].path1} L 500 150 L 0 150 Z`}
                         fill="url(#chart-grad-1)"
-                        className="transition-opacity duration-1000"
+                        className="transition-all duration-700"
                         style={{ opacity: animateChart ? 1 : 0 }}
                       />
 
                       {/* Path Line 1 (Drawn dynamically) */}
                       <path
-                        d="M0 120 C 50 110, 100 90, 150 100 C 200 110, 250 50, 300 45 C 350 40, 400 80, 450 60 L 500 40"
+                        d={chartPaths[revenueTimeframe as keyof typeof chartPaths]?.path1 || chartPaths["This Month"].path1}
                         stroke="#F7C844"
                         strokeWidth="2.5"
                         strokeLinecap="round"
@@ -459,7 +579,7 @@ Select any capability on the left or type your query below to analyze your live 
 
                       {/* Path Line 2 (Drawn dynamically) */}
                       <path
-                        d="M0 140 C 60 130, 120 120, 180 115 C 240 110, 300 80, 360 85 C 420 90, 480 65, 500 55"
+                        d={chartPaths[revenueTimeframe as keyof typeof chartPaths]?.path2 || chartPaths["This Month"].path2}
                         stroke="#FF9933"
                         strokeWidth="1.5"
                         strokeDasharray="4 2"
@@ -475,9 +595,9 @@ Select any capability on the left or type your query below to analyze your live 
                     </svg>
 
                     {/* Dynamic Floating Label */}
-                    <div className="absolute top-2 left-[58%] transform -translate-x-1/2 bg-[#172B36] border border-[#F7C844]/30 px-2 py-1 rounded-md text-[9px] font-mono shadow-md transition-all hover:scale-105">
-                      <span className="text-[#F3F7F9]/50">Peak sales:</span>{" "}
-                      <span className="text-[#F7C844] font-bold">₹1.8L/day</span>
+                    <div className="absolute top-2 left-[58%] transform -translate-x-1/2 bg-[#172B36]/90 border border-[#F7C844]/30 px-2 py-1 rounded-md text-[9px] font-mono shadow-md transition-all hover:scale-105">
+                      <span className="text-[#F3F7F9]/50">Peak:</span>{" "}
+                      <span className="text-[#F7C844] font-bold">{chartPaths[revenueTimeframe as keyof typeof chartPaths]?.peak || chartPaths["This Month"].peak}</span>
                     </div>
 
                     {/* Chart X Axis Labels */}
@@ -515,21 +635,25 @@ Select any capability on the left or type your query below to analyze your live 
                     </span>
                   </div>
 
-                  {/* Warning / Intelligence content */}
+                  {/* Warning / Intelligence dynamic rotating content */}
                   <div className="mt-3.5 space-y-2.5">
-                    <div className="flex gap-2 p-2 rounded-lg bg-[#172B36]/50 border border-white/5 transition-colors hover:bg-white/[0.01]">
-                      <Globe className="w-4 h-4 text-[#F7C844] shrink-0 mt-0.5 animate-spin" style={{ animationDuration: "12s" }} />
-                      <p className="font-sans text-xs text-[#F3F7F9]/75 leading-normal">
-                        <span className="text-white font-medium">Blinkit Competitor pricing shift</span>: Kirana Retailers within 3km reduced pricing of Basmati Rice to <span className="text-[#F7C844] font-semibold">₹105/kg</span>. Ideal action suggested.
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2 p-2 rounded-lg bg-[#172B36]/50 border border-white/5 transition-colors hover:bg-white/[0.01]">
-                      <FileText className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <p className="font-sans text-xs text-[#F3F7F9]/75 leading-normal">
-                        <span className="text-white font-medium">Tally Ledger reconciled</span>: Outstanding balance of <span className="text-emerald-400 font-semibold">₹4,20,000</span> for Sharma Distributors has been verified.
-                      </p>
-                    </div>
+                    {alerts.map((alert) => (
+                      <div 
+                        key={alert.id}
+                        className="flex gap-2 p-2 rounded-lg bg-[#172B36]/50 border border-white/5 transition-all duration-500 hover:bg-white/[0.01] animate-fade-in-up"
+                      >
+                        {alert.type === "market" ? (
+                          <Globe className="w-4 h-4 text-[#F7C844] shrink-0 mt-0.5 animate-spin" style={{ animationDuration: "12s" }} />
+                        ) : (
+                          <FileText className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        )}
+                        <p className="font-sans text-xs text-[#F3F7F9]/75 leading-normal">
+                          <span className="text-white font-semibold">
+                            {alert.type === "market" ? "Market Intelligence" : "System Reconciler"}
+                          </span>: {alert.text}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -554,7 +678,14 @@ Select any capability on the left or type your query below to analyze your live 
                     </div>
                   </div>
 
-                  <span className="w-2 h-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50 animate-pulse" />
+                  {/* Bilingual Voice Waveform Indicator */}
+                  <div className="flex items-center gap-[3px] h-3.5 px-1.5 py-0.5 bg-[#114C5A]/40 border border-white/5 rounded-md">
+                    <span className="font-mono text-[7px] text-[#F7C844] font-bold tracking-widest mr-1">VOICE</span>
+                    <span className="w-[1.5px] h-2 bg-[#F7C844] rounded-full origin-bottom animate-[voice-bounce_0.8s_infinite_ease-in-out]" />
+                    <span className="w-[1.5px] h-2.5 bg-[#FF9933] rounded-full origin-bottom animate-[voice-bounce_1.2s_infinite_ease-in-out] [animation-delay:0.2s]" />
+                    <span className="w-[1.5px] h-1.5 bg-[#F7C844] rounded-full origin-bottom animate-[voice-bounce_0.9s_infinite_ease-in-out] [animation-delay:0.4s]" />
+                    <span className="w-[1.5px] h-3 bg-[#FF9933] rounded-full origin-bottom animate-[voice-bounce_1s_infinite_ease-in-out] [animation-delay:0.1s]" />
+                  </div>
                 </div>
 
                 {/* Copilot Response Terminal view */}
@@ -572,7 +703,7 @@ Select any capability on the left or type your query below to analyze your live 
                     </div>
                   ) : (
                     <div className="prose prose-invert prose-xs">
-                      {chatResponse.split("\n").map((line, idx) => {
+                      {displayedResponse.split("\n").map((line, idx) => {
                         // Very simple markdown presentation for boldness & bullet points
                         let formattedLine = line;
                         
@@ -615,6 +746,9 @@ Select any capability on the left or type your query below to analyze your live 
                           </p>
                         );
                       })}
+                      {displayedResponse.length < chatResponse.length && (
+                        <span className="inline-block w-1.5 h-3 bg-[#F7C844] ml-0.5 animate-pulse" />
+                      )}
                     </div>
                   )}
                 </div>

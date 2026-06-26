@@ -139,78 +139,235 @@ const FEATURES_DATA: FeatureItem[] = [
   }
 ];
 
-// Mini Illustration Renderer for the Bento grid cards (adds unique premium SVG visuals per card)
-const MiniIllustration = ({ type, accentColor }: { type: string, accentColor: string }) => {
+// Mini Illustration Renderer for the Bento grid cards (adds unique premium interactive visuals per card)
+const MiniIllustration = ({ type, accentColor, isActive }: { type: string, accentColor: string, isActive: boolean }) => {
   switch (type) {
-    case "copilot":
+    case "copilot": {
+      const [text, setText] = useState("GSTR-1 Ready");
+      useEffect(() => {
+        if (!isActive) {
+          setText("Idle");
+          return;
+        }
+        const words = ["GSTR-1 ready", "ITC audit OK", "Tally connected", "No anomalies"];
+        let wordIdx = 0;
+        let charIdx = 0;
+        let isTyping = true;
+        let delayTimer: any;
+
+        const interval = setInterval(() => {
+          if (isTyping) {
+            setText(words[wordIdx].slice(0, charIdx + 1));
+            charIdx++;
+            if (charIdx === words[wordIdx].length) {
+              isTyping = false;
+              clearInterval(interval);
+              delayTimer = setTimeout(() => {
+                // Resume loop to clear
+                const eraseInterval = setInterval(() => {
+                  setText(words[wordIdx].slice(0, charIdx - 1));
+                  charIdx--;
+                  if (charIdx === 0) {
+                    clearInterval(eraseInterval);
+                    wordIdx = (wordIdx + 1) % words.length;
+                    isTyping = true;
+                    // Trigger typing effect again manually on next cycle
+                  }
+                }, 80);
+              }, 1200);
+            }
+          }
+        }, 120);
+
+        return () => {
+          clearInterval(interval);
+          clearTimeout(delayTimer);
+        };
+      }, [isActive]);
+
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <rect x="10" y="10" width="80" height="40" rx="8" stroke={accentColor} strokeWidth="1.5" strokeDasharray="3 3" />
-          <circle cx="50" cy="30" r="12" fill={`${accentColor}20`} stroke={accentColor} strokeWidth="2" />
-          <line x1="30" y1="30" x2="38" y2="30" stroke={accentColor} strokeWidth="1.5" />
-          <line x1="62" y1="30" x2="70" y2="30" stroke={accentColor} strokeWidth="1.5" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-1.5 flex flex-col justify-between font-mono text-[8px] overflow-hidden shadow-md">
+          <div className="flex gap-1 border-b border-white/5 pb-1 justify-between">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500/80" />
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/80" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500/80" />
+            </div>
+            <span className="text-[6px] text-white/30">COPILOT_CMD</span>
+          </div>
+          <div className="text-white/60 pl-1 mt-1 font-semibold flex items-center">
+            <span className="text-[#F7C844] mr-1">$</span>
+            <span>{text}</span>
+            <span className="inline-block w-1 h-2 bg-[#F7C844] ml-0.5 animate-pulse" />
+          </div>
+        </div>
       );
-    case "finance":
+    }
+    case "finance": {
+      const [amt, setAmt] = useState(1428500);
+      useEffect(() => {
+        if (!isActive) return;
+        const timer = setInterval(() => {
+          setAmt(prev => prev + Math.floor(Math.random() * 45) + 5);
+        }, 3000);
+        return () => clearInterval(timer);
+      }, [isActive]);
+
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <path d="M10 50 Q 30 20, 50 35 T 90 15" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" />
-          <circle cx="50" cy="35" r="4" fill={accentColor} />
-          <circle cx="90" cy="15" r="4" fill={accentColor} />
-          <line x1="10" y1="50" x2="90" y2="50" stroke="white" strokeOpacity="0.1" strokeWidth="1.5" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-mono text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between items-center text-white/40 border-b border-white/5 pb-1">
+            <span>AUDIT STATUS</span>
+            <span className="text-emerald-400 font-bold animate-pulse">● LIVE</span>
+          </div>
+          <div className="text-[#FF9933] font-extrabold text-[10px] leading-tight mt-1">
+            ₹{(amt / 100000).toFixed(2)}L
+          </div>
+          <svg className="w-full h-5 mt-0.5" viewBox="0 0 100 20" fill="none">
+            <path d="M0 15 Q 15 10, 30 14 T 60 4 T 90 8 L 100 2" stroke="#FF9933" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="100" cy="2" r="2.5" fill="#FF9933" className="animate-ping" />
+            <circle cx="100" cy="2" r="2" fill="#FF9933" />
+          </svg>
+        </div>
       );
-    case "gst":
+    }
+    case "gst": {
+      const [score, setScore] = useState(99.4);
+      useEffect(() => {
+        if (!isActive) return;
+        const timer = setInterval(() => {
+          setScore(prev => {
+            const next = prev + (Math.random() > 0.5 ? 0.1 : -0.1);
+            return Math.max(98.8, Math.min(100, parseFloat(next.toFixed(1))));
+          });
+        }, 4000);
+        return () => clearInterval(timer);
+      }, [isActive]);
+
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <rect x="25" y="10" width="50" height="40" rx="6" stroke={accentColor} strokeWidth="1.5" />
-          <path d="M35 25 H 65 M35 35 H 55" stroke="white" strokeOpacity="0.3" strokeWidth="2" strokeLinecap="round" />
-          <path d="M60 40 L 70 50" stroke={accentColor} strokeWidth="2" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-sans text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1">
+            <span>COMPLIANCE</span>
+            <span className="text-emerald-400 font-mono font-bold">SECURE</span>
+          </div>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="relative w-8 h-8 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center animate-[spin_10s_linear_infinite]">
+              <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center font-mono text-[7px] text-[#10B981] font-bold">
+                {score}%
+              </div>
+            </div>
+            <div className="flex flex-col text-[6px] text-[#F3F7F9]/60 leading-normal">
+              <span className="text-white font-semibold">Tax-Shield V1</span>
+              <span>0 mismatches</span>
+            </div>
+          </div>
+        </div>
       );
-    case "voice":
+    }
+    case "voice": {
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <rect x="42" y="15" width="16" height="30" rx="8" stroke={accentColor} strokeWidth="2" />
-          <path d="M30 30 C 30 42, 70 42, 70 30" stroke="white" strokeOpacity="0.2" strokeWidth="2" />
-          <line x1="50" y1="45" x2="50" y2="52" stroke={accentColor} strokeWidth="2" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-sans text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1">
+            <span>VOICE ENGINE</span>
+            <span className="text-[#38BDF8] font-mono animate-pulse">STREAMING</span>
+          </div>
+          <div className="flex items-end justify-center gap-1 h-7 mt-2">
+            <span className="w-1 bg-[#38BDF8] rounded-full h-3 origin-bottom animate-[voice-bounce_0.7s_infinite_ease-in-out]" />
+            <span className="w-1 bg-[#38BDF8] rounded-full h-5 origin-bottom animate-[voice-bounce_1.1s_infinite_ease-in-out] [animation-delay:0.15s]" />
+            <span className="w-1 bg-[#38BDF8] rounded-full h-4 origin-bottom animate-[voice-bounce_0.9s_infinite_ease-in-out] [animation-delay:0.3s]" />
+            <span className="w-1 bg-[#38BDF8] rounded-full h-6 origin-bottom animate-[voice-bounce_1.3s_infinite_ease-in-out] [animation-delay:0.45s]" />
+            <span className="w-1 bg-[#38BDF8] rounded-full h-5 origin-bottom animate-[voice-bounce_0.8s_infinite_ease-in-out] [animation-delay:0.2s]" />
+            <span className="w-1 bg-[#38BDF8] rounded-full h-2 origin-bottom animate-[voice-bounce_1s_infinite_ease-in-out] [animation-delay:0.1s]" />
+          </div>
+        </div>
       );
-    case "agents":
+    }
+    case "agents": {
+      const [queue, setQueue] = useState(3);
+      useEffect(() => {
+        if (!isActive) return;
+        const timer = setInterval(() => {
+          setQueue(prev => {
+            const next = prev > 1 ? prev - 1 : 5;
+            return next;
+          });
+        }, 2500);
+        return () => clearInterval(timer);
+      }, [isActive]);
+
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <rect x="20" y="15" width="60" height="30" rx="6" stroke="white" strokeOpacity="0.1" strokeWidth="1.5" />
-          <circle cx="35" cy="30" r="6" fill={`${accentColor}30`} stroke={accentColor} strokeWidth="1.5" />
-          <circle cx="65" cy="30" r="6" fill={`${accentColor}30`} stroke={accentColor} strokeWidth="1.5" />
-          <line x1="41" y1="30" x2="59" y2="30" stroke={accentColor} strokeWidth="1.5" strokeDasharray="2 2" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-mono text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1">
+            <span>CLUSTER_A1</span>
+            <span className="text-[#A7F3D0] font-bold">ONLINE</span>
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <div className="flex flex-col text-[7px] text-[#F3F7F9]/50 leading-normal">
+              <span>Active: <strong className="text-white">5</strong></span>
+              <span>Queue: <strong className="text-[#A7F3D0]">{queue}</strong></span>
+            </div>
+            <div className="w-6 h-6 rounded-lg bg-[#A7F3D0]/10 flex items-center justify-center animate-spin" style={{ animationDuration: "6s" }}>
+              <Cpu className="w-3.5 h-3.5 text-[#A7F3D0]" />
+            </div>
+          </div>
+        </div>
       );
-    case "dashboard":
+    }
+    case "dashboard": {
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <rect x="15" y="15" width="70" height="30" rx="4" stroke="white" strokeOpacity="0.1" strokeWidth="1.5" />
-          <line x1="30" y1="40" x2="30" y2="25" stroke={accentColor} strokeWidth="3" strokeLinecap="round" />
-          <line x1="50" y1="40" x2="50" y2="20" stroke={accentColor} strokeWidth="3" strokeLinecap="round" />
-          <line x1="70" y1="40" x2="70" y2="30" stroke={accentColor} strokeWidth="3" strokeLinecap="round" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-mono text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1">
+            <span>LATENCY MONITOR</span>
+            <span className="text-[#F59E0B]">25ms</span>
+          </div>
+          <div className="flex items-end justify-between h-7 mt-1.5 px-0.5">
+            <div className="w-1.5 bg-[#F59E0B]/20 rounded-t h-4" />
+            <div className="w-1.5 bg-[#F59E0B]/30 rounded-t h-2 animate-[pulse_1.5s_infinite]" />
+            <div className="w-1.5 bg-[#F59E0B] rounded-t h-5" />
+            <div className="w-1.5 bg-[#F59E0B]/50 rounded-t h-3" />
+            <div className="w-1.5 bg-[#F59E0B]/80 rounded-t h-4.5" />
+          </div>
+        </div>
       );
-    case "market":
+    }
+    case "market": {
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <circle cx="50" cy="30" r="18" stroke="white" strokeOpacity="0.1" strokeWidth="1.5" />
-          <circle cx="50" cy="30" r="8" fill={`${accentColor}40`} stroke={accentColor} strokeWidth="1.5" />
-          <line x1="50" y1="12" x2="50" y2="48" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
-          <line x1="32" y1="30" x2="68" y2="30" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-sans text-[8px] overflow-hidden relative shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1 z-10">
+            <span>RADAR FEED</span>
+            <span className="text-[#E37400] font-mono font-bold">3km</span>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 top-6 flex items-center justify-center overflow-hidden pointer-events-none">
+            <div className="w-16 h-16 rounded-full border border-[#E37400]/20 flex items-center justify-center relative bg-radial">
+              <div className="absolute top-1/2 left-1/2 w-8 h-0.5 bg-gradient-to-r from-[#E37400]/60 to-transparent origin-left -translate-y-1/2 animate-[spin_4s_linear_infinite]" />
+              <span className="absolute top-4 left-4 w-1.5 h-1.5 rounded-full bg-[#E37400] animate-ping" />
+              <span className="absolute top-4 left-4 w-1 h-1 rounded-full bg-[#E37400] z-20" />
+            </div>
+          </div>
+          <div className="text-[6.5px] text-white/70 font-mono mt-0.5 z-10 font-bold">
+            Blinkit: ₹125/kg
+          </div>
+        </div>
       );
-    case "workflow":
+    }
+    case "workflow": {
       return (
-        <svg className="w-24 h-16 opacity-30 group-hover:opacity-65 transition-all duration-300 transform group-hover:scale-105" viewBox="0 0 100 60" fill="none">
-          <path d="M30 15 L50 35 L70 15" stroke="white" strokeOpacity="0.1" strokeWidth="2" strokeLinecap="round" />
-          <path d="M30 35 L50 50 L70 35" stroke={accentColor} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="50" cy="50" r="3" fill={accentColor} />
-        </svg>
+        <div className="w-28 h-16 bg-[#172B36] border border-white/10 rounded-lg p-2 flex flex-col justify-between font-mono text-[8px] overflow-hidden shadow-md">
+          <div className="flex justify-between text-white/40 border-b border-white/5 pb-1">
+            <span>PIPELINES</span>
+            <span className="text-[#0078D4] font-bold">ACTIVE</span>
+          </div>
+          <div className="flex items-center justify-around h-7 mt-2.5 border border-white/5 bg-[#172B36]/50 rounded-lg p-1">
+            <div className="w-4.5 h-4.5 rounded-full bg-[#0078D4]/20 border border-[#0078D4]/50 flex items-center justify-center animate-pulse">
+              <Database className="w-2.5 h-2.5 text-[#0078D4]" />
+            </div>
+            <span className="text-[#0078D4] animate-pulse">→</span>
+            <div className="w-4.5 h-4.5 rounded-full bg-[#0078D4]/20 border border-[#0078D4]/50 flex items-center justify-center animate-spin" style={{ animationDuration: "10s" }}>
+              <Zap className="w-2.5 h-2.5 text-[#0078D4]" />
+            </div>
+          </div>
+        </div>
       );
+    }
     default:
       return null;
   }
@@ -318,7 +475,7 @@ const BentoCard = memo(({
         </div>
 
         <div className="hidden sm:block">
-          <MiniIllustration type={feature.illustrationType} accentColor={feature.accentColor} />
+          <MiniIllustration type={feature.illustrationType} accentColor={feature.accentColor} isActive={isActive} />
         </div>
       </div>
     </div>

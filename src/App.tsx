@@ -6,7 +6,10 @@ import DashboardPreview from "./components/DashboardPreview";
 import WatchDemoModal from "./components/WatchDemoModal";
 import IntegrationStory from "./components/IntegrationStory";
 import CoreFeatures from "./components/CoreFeatures";
+import BusinessOutcomes from "./components/BusinessOutcomes";
 import PricingSection from "./components/PricingSection";
+import FAQSection from "./components/FAQSection";
+import FinalCTA from "./components/FinalCTA";
 import { Sparkles, Shield, ArrowRight, Zap } from "lucide-react";
 
 export default function App() {
@@ -168,8 +171,17 @@ export default function App() {
       {/* Core Features Suite: Bento Grid with Context Lock & Responsive Accordion */}
       <CoreFeatures />
 
+      {/* Business Outcomes & Industry Case Studies Section */}
+      <BusinessOutcomes />
+
       {/* Premium Pricing Matrix Section */}
       <PricingSection />
+
+      {/* Premium FAQ Section */}
+      <FAQSection />
+
+      {/* Cinematic Final CTA Section */}
+      <FinalCTA />
 
       {/* Watch Demo Tour Walkthrough Modal */}
       <WatchDemoModal 
